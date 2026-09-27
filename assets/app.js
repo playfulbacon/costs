@@ -58,45 +58,39 @@
 
   // ---------- scorecard ----------
   const CARDS = [
-    { k: "price", label: "Median home price", sub: "today's dollars", f: fmtK, worse: "up" },
-    { k: "income", label: "Median household income", subFn: () => (state.basis === "young" ? "householders aged 25–34, today's dollars" : "all households, today's dollars"), f: fmtK, worse: "down" },
-    { k: "pti", label: "House price ÷ income", sub: "years of income per house", f: (x) => fmt1(x, "×"), worse: "up" },
-    { k: "rate", label: "30-year mortgage rate", sub: "average for the year", f: fmtPct, worse: "up" },
-    { k: "payShare", label: "Mortgage payment", sub: "share of monthly income", f: fmtPct, worse: "up" },
-    { k: "saveYears", label: "Time to save a down payment", subFn: () => `${state.dp * 100}% down, saving ${state.save * 100}% of income`, f: (x) => fmt1(x, " yrs"), worse: "up" },
-    { k: "rentShare", label: "Rent", sub: "share of income", f: fmtPct, worse: "up" },
-    { k: "own35", label: "Under-35s who own a home", sub: "homeownership rate", f: fmtPct, worse: "down", fallback: "ownAll", fallbackSub: "all ages (under-35 data starts in 1994)" },
-    { k: "minRentHours", label: "Minimum-wage hours for a month's rent", sub: "federal minimum", f: (x) => fmt1(x, " hrs"), worse: "up" },
-    { k: "lifetimeInterest", label: "Interest paid over the loan", sub: "30 years, today's dollars", f: fmtK, worse: "up" },
+    { k: "price", label: "Median home price", sub: "today's dollars", f: fmtK },
+    { k: "income", label: "Median household income", subFn: () => (state.basis === "young" ? "householders aged 25–34, today's dollars" : "all households, today's dollars"), f: fmtK },
+    { k: "pti", label: "House price ÷ income", sub: "years of income per house", f: (x) => fmt1(x, "×") },
+    { k: "rate", label: "30-year mortgage rate", sub: "average for the year", f: fmtPct },
+    { k: "payShare", label: "Mortgage payment", sub: "share of monthly income", f: fmtPct },
+    { k: "saveYears", label: "Time to save a down payment", subFn: () => `${state.dp * 100}% down, saving ${state.save * 100}% of income`, f: (x) => fmt1(x, " yrs") },
+    { k: "rentShare", label: "Rent", sub: "share of income", f: fmtPct },
+    { k: "own35", label: "Under-35s who own a home", sub: "homeownership rate", f: fmtPct, fallback: "ownAll", fallbackSub: "all ages (under-35 data starts in 1994)" },
+    { k: "minRentHours", label: "Minimum-wage hours for a month's rent", sub: "federal minimum", f: (x) => fmt1(x, " hrs") },
+    { k: "lifetimeInterest", label: "Interest paid over the loan", sub: "30 years, today's dollars", f: fmtK },
   ];
 
   function renderScore() {
     const { then, now, tRaw, nRaw } = years();
     const clampNote = [];
-    if (tRaw !== then) clampNote.push(`your parents' year was clamped to ${then}`);
-    if (nRaw !== now) clampNote.push(`your year was clamped to ${now}, the latest full year of income data`);
-    $("#yearsLine").innerHTML = `Comparing <b class="t-then">${then}</b> (parents at ${state.age}) with <b class="t-now">${now}</b> (you at ${state.age}).` +
+    if (tRaw !== then) clampNote.push(`the earlier year was set to ${then}, the first year with full data`);
+    if (nRaw !== now) clampNote.push(`the later year was set to ${now}, the latest full year of income data`);
+    $("#yearsLine").innerHTML = `Comparing <b class="t-then">${then}</b> (born ${state.pBirth}, age ${state.age}) with <b class="t-now">${now}</b> (born ${state.yBirth}, age ${state.age}).` +
       (clampNote.length ? ` <span class="muted">Note: ${clampNote.join("; ")}.</span>` : "");
     $("#scoreSub").textContent = `Each card shows what a typical ${state.age}-year-old faced in ${then} and ${now}. Dollar amounts are adjusted for inflation to ${base} dollars.`;
 
-    let harder = 0, easier = 0, same = 0, total = 0;
     const html = CARDS.map((c) => {
       let key = c.k, sub = c.subFn ? c.subFn() : c.sub;
       let a = M[key](then), b = M[key](now);
       if (!ok(a) && c.fallback) { key = c.fallback; sub = c.fallbackSub; a = M[key](then); b = M[key](now); }
-      let tag = "", cls = "neutral";
+      let tag = "";
       if (ok(a, b) && a !== 0) {
-        const ch = (b - a) / Math.abs(a);
-        const bad = c.worse === "up" ? ch > 0.05 : ch < -0.05;
-        const good = c.worse === "up" ? ch < -0.05 : ch > 0.05;
-        total++;
-        if (bad) { harder++; cls = "worse"; } else if (good) { easier++; cls = "better"; } else { same++; }
-        const mult = b / a;
+        const ch = (b - a) / Math.abs(a), mult = b / a;
         const change = Math.abs(ch) < 0.05 ? "About the same" : mult >= 1.5 || mult <= 0.67 ? (mult >= 1 ? `${mult.toFixed(1)}× higher` : `${(1 / mult).toFixed(1)}× lower`) : `${ch > 0 ? "+" : "−"}${Math.abs(ch * 100).toFixed(0)}%`;
-        const word = cls === "worse" ? "Harder now" : cls === "better" ? "Easier now" : "Similar";
-        tag = `<span class="tag ${cls}"><span class="ico" aria-hidden="true">${cls === "worse" ? "▲" : cls === "better" ? "▼" : "●"}</span>${word}</span><span class="change">${change}</span>`;
+        const ico = Math.abs(ch) < 0.05 ? "●" : ch > 0 ? "▲" : "▼";
+        tag = `<span class="change"><span class="ico" aria-hidden="true">${ico}</span> ${change}</span>`;
       }
-      return `<article class="card score ${cls}">
+      return `<article class="card score">
         <h3>${c.label}</h3><p class="sub">${sub}</p>
         <div class="pair">
           <div><span class="yr t-then">${then}</span><span class="num">${c.f(a)}</span></div>
@@ -107,14 +101,12 @@
     }).join("");
     $("#scoregrid").innerHTML = html;
 
-    const pti = [M.pti(then), M.pti(now)], sy = [M.saveYears(then), M.saveYears(now)];
-    const diff = harder - easier;
-    const headline = diff >= 3 ? "It's harder for you." : diff >= 1 ? "Mixed, but it leans harder for you." : diff <= -3 ? "Your parents had it harder." : diff <= -1 ? "Mixed, but it leans harder for your parents." : "It's roughly a draw.";
-    $("#verdict").innerHTML = `<div class="verdict-num"><span class="big">${harder}</span><span>of ${total} measures are harder in ${now}</span></div>
-      <div class="verdict-text"><p class="headline">${headline}</p>
+    const pti = [M.pti(then), M.pti(now)], sy = [M.saveYears(then), M.saveYears(now)], ps = [M.payShare(then), M.payShare(now)];
+    $("#verdict").innerHTML = `<div class="verdict-num"><span class="big"><span class="t-then">${fmt1(pti[0], "×")}</span> → <span class="t-now">${fmt1(pti[1], "×")}</span></span><span>median home price ÷ median income</span></div>
+      <div class="verdict-text"><p class="headline">${then} vs ${now} at a glance</p>
       <p>In ${then} the median home cost <b>${fmt1(pti[0], "×")}</b> the median yearly income. In ${now} it cost <b>${fmt1(pti[1], "×")}</b>.
-      Saving ${state.dp * 100}% down at ${state.save * 100}% of income took about <b>${fmt1(sy[0], " years")}</b> then and <b>${fmt1(sy[1], " years")}</b> now.
-      ${easier ? `${easier} measure${easier > 1 ? "s were" : " was"} easier in ${now}, and ${same} ${same === 1 ? "was" : "were"} about the same.` : ""}</p></div>`;
+      Saving ${state.dp * 100}% down at ${state.save * 100}% of income took about <b>${fmt1(sy[0], " years")}</b> in ${then} and <b>${fmt1(sy[1], " years")}</b> in ${now}.
+      ${ok(...ps) ? `The monthly mortgage payment took <b>${fmtPct(ps[0])}</b> of income in ${then} and <b>${fmtPct(ps[1])}</b> in ${now}.` : ""}</p></div>`;
   }
 
   // ---------- charts ----------
@@ -241,7 +233,7 @@
     const color = (r) => (r.kind === "pay" ? t.c3 : r.kind === "ref" ? t.muted : t.c7);
     const cpiG = rows.find((r) => r.k === "cpi");
     const inc = rows.find((r) => r.k === (state.basis === "young" ? "youngIncome" : "hhIncome"));
-    $("#costSub").innerHTML = `Nominal price change from <b class="t-then">${then}</b> to <b class="t-now">${now}</b>. Purple bars are costs, green bars are pay and the gray bar is overall inflation. Anything that grew faster than income takes a bigger share of a paycheck now.` +
+    $("#costSub").innerHTML = `Nominal price change from <b class="t-then">${then}</b> to <b class="t-now">${now}</b>. Purple bars are costs, green bars are pay and the gray bar is overall inflation. Anything that grew faster than income takes a bigger share of a paycheck in the later year.` +
       (cpiG && inc ? ` Overall prices rose <b>${Math.round(cpiG.g)}%</b> and income rose <b>${Math.round(inc.g)}%</b>.` : "") +
       (then < 1978 ? " <span class=\"muted\">Tuition data starts in 1978.</span>" : "");
     const cfg = {
@@ -275,41 +267,46 @@
     charts.cGrowth = new Chart(document.getElementById("cGrowth"), cfg);
   }
 
-  // ---------- fair points ----------
+  // ---------- key changes ----------
   function renderPoints() {
     const { then, now } = years();
-    const P = [], K = [];
+    const H = [], P = [];
     const pct = (a, b) => Math.round((b / a - 1) * 100);
-    const inc = [M.income(then), M.income(now)];
-    if (ok(...inc)) (inc[1] > inc[0] ? P : K).push(`After inflation, median income ${inc[1] > inc[0] ? "rose" : "fell"} <b>${Math.abs(pct(...inc))}%</b>, from ${fmtK(inc[0])} to ${fmtK(inc[1])} in ${base} dollars.`);
-    const r = [M.rate(then), M.rate(now)];
-    if (ok(...r)) (r[0] > r[1] ? P : K).push(`Mortgage rates were <b>${r[0].toFixed(1)}%</b> in ${then} and <b>${r[1].toFixed(1)}%</b> in ${now}.` + (r[0] > r[1] ? " A lower rate softens the monthly payment on a pricier home." : ""));
-    const ps = [M.payShare(then), M.payShare(now)];
-    if (ok(...ps)) (ps[0] >= ps[1] ? P : K).push(`The monthly mortgage payment took <b>${ps[0].toFixed(0)}%</b> of income in ${then} and <b>${ps[1].toFixed(0)}%</b> in ${now}.`);
-    const peak = series(M.payShare, 1971).reduce((m, p) => (p.y > m.y ? p : m), { y: 0 });
-    if (peak.x) P.push(`The worst year on record for mortgage payments was <b>${peak.x}</b>. Payments took ${peak.y.toFixed(0)}% of income because rates reached about ${M.rate(peak.x).toFixed(0)}%. Anyone who bought in the early 1980s really did have it tough.`);
-    ["apparelIdx", "carIdx", "foodIdx"].forEach((k) => {
-      const names = { apparelIdx: "Clothing", carIdx: "New cars", foodIdx: "Food" };
-      const g = pct(v(k, then), v(k, now)), gi = pct(income(then), income(now));
-      if (ok(g, gi) && g < gi) P.push(`${names[k]} prices rose ${g}%, less than income (${gi}%), so ${names[k].toLowerCase()} ${k === "carIdx" ? "take" : "takes"} a smaller share of pay today.`);
-    });
+    const moved = (a, b, up = "rose", down = "fell") => (b >= a ? up : down);
+    const gi = pct(income(then), income(now));
+
     const pti = [M.pti(then), M.pti(now)];
-    if (ok(...pti)) (pti[1] > pti[0] ? K : P).push(`A home cost <b>${pti[0].toFixed(1)}</b> years of income in ${then} and <b>${pti[1].toFixed(1)}</b> years in ${now}.`);
+    if (ok(...pti)) H.push(`The median home cost <b>${pti[0].toFixed(1)}</b> years of median income in ${then} and <b>${pti[1].toFixed(1)}</b> years in ${now}.`);
+    const r = [M.rate(then), M.rate(now)];
+    if (ok(...r)) H.push(`The average 30-year mortgage rate was <b>${r[0].toFixed(1)}%</b> in ${then} and <b>${r[1].toFixed(1)}%</b> in ${now}.`);
+    const ps = [M.payShare(then), M.payShare(now)];
+    if (ok(...ps)) H.push(`A monthly mortgage payment on the median home took <b>${ps[0].toFixed(0)}%</b> of income in ${then} and <b>${ps[1].toFixed(0)}%</b> in ${now}.`);
     const sy = [M.saveYears(then), M.saveYears(now)];
-    if (ok(...sy)) (sy[1] > sy[0] ? K : P).push(`Saving a ${state.dp * 100}% down payment took about <b>${sy[0].toFixed(1)} years</b> then and <b>${sy[1].toFixed(1)} years</b> now. Rent has to be paid the whole time you're saving.`);
-    ["tuitionIdx", "medicalIdx", "rentIdx"].forEach((k) => {
-      const names = { tuitionIdx: "Tuition and childcare", medicalIdx: "Medical care", rentIdx: "Rent" };
-      const g = pct(v(k, then), v(k, now)), gi = pct(income(then), income(now));
-      if (ok(g, gi) && g > gi) K.push(`${names[k]} rose <b>${g}%</b>, while income rose only ${gi}%.`);
-    });
+    if (ok(...sy)) H.push(`Saving a ${state.dp * 100}% down payment at ${state.save * 100}% of income took about <b>${sy[0].toFixed(1)} years</b> in ${then} and <b>${sy[1].toFixed(1)} years</b> in ${now}.`);
+    const rs = [M.rentShare(then), M.rentShare(now)];
+    if (ok(...rs)) H.push(`Median rent took <b>${rs[0].toFixed(0)}%</b> of income in ${then} and <b>${rs[1].toFixed(0)}%</b> in ${now}.`);
     const o = [M.own35(then), M.own35(now)];
-    if (ok(...o)) (o[1] < o[0] ? K : P).push(`Among under-35s, <b>${o[0].toFixed(1)}%</b> owned a home in ${then}, compared with <b>${o[1].toFixed(1)}%</b> in ${now}.`);
+    if (ok(...o)) H.push(`Among householders under 35, <b>${o[0].toFixed(1)}%</b> owned a home in ${then} and <b>${o[1].toFixed(1)}%</b> in ${now}.`);
+    const peak = series(M.payShare, 1971).reduce((m, p) => (p.y > m.y ? p : m), { y: 0 });
+    if (peak.x) H.push(`The highest mortgage payment burden in the data was in <b>${peak.x}</b>, when payments took ${peak.y.toFixed(0)}% of income and rates averaged about ${M.rate(peak.x).toFixed(0)}%.`);
+
+    const inc = [M.income(then), M.income(now)];
+    if (ok(...inc)) P.push(`After inflation, median income ${moved(...inc)} <b>${Math.abs(pct(...inc))}%</b>, from ${fmtK(inc[0])} to ${fmtK(inc[1])} in ${base} dollars.`);
+    const names = { tuitionIdx: "Tuition and childcare", medicalIdx: "Medical care", rentIdx: "Rent", foodIdx: "Food", carIdx: "New car", apparelIdx: "Clothing" };
+    const rows = Object.keys(names).map((k) => ({ k, g: pct(v(k, then), v(k, now)) })).filter((x) => ok(x.g));
+    const faster = rows.filter((x) => x.g > gi), slower = rows.filter((x) => x.g <= gi);
+    if (ok(gi)) {
+      if (faster.length) P.push(`Prices that rose faster than income (${gi}%): ${faster.map((x) => `${names[x.k].toLowerCase()} <b>${x.g}%</b>`).join(", ")}.`);
+      if (slower.length) P.push(`Prices that rose slower than income (${gi}%): ${slower.map((x) => `${names[x.k].toLowerCase()} <b>${x.g}%</b>`).join(", ")}.`);
+    }
     const pr = [v("productivity", then), v("productivity", now)], rc = [v("realComp", then), v("realComp", now)];
-    if (ok(...pr, ...rc)) K.push(`Output per hour of work rose ${pct(...pr)}%, but real hourly pay rose ${pct(...rc)}%.`);
+    if (ok(...pr, ...rc)) P.push(`Output per hour of work ${moved(...pr)} ${Math.abs(pct(...pr))}%, and real hourly compensation ${moved(...rc)} ${Math.abs(pct(...rc))}%.`);
     const mw = [M.minReal(then), M.minReal(now)];
-    if (ok(...mw) && mw[1] < mw[0]) K.push(`After inflation, the federal minimum wage fell from $${mw[0].toFixed(2)} to $${mw[1].toFixed(2)}.`);
-    $("#parentsPoints").innerHTML = P.map((x) => `<li>${x}</li>`).join("") || "<li>No clear advantages for this pair of years.</li>";
-    $("#kidsPoints").innerHTML = K.map((x) => `<li>${x}</li>`).join("") || "<li>No clear disadvantages for this pair of years.</li>";
+    if (ok(...mw)) P.push(`After inflation, the federal minimum wage was $${mw[0].toFixed(2)} in ${then} and $${mw[1].toFixed(2)} in ${now} (${base} dollars).`);
+    const sr = [M.saveRate(then), M.saveRate(now)];
+    if (ok(...sr)) P.push(`The personal saving rate was ${sr[0].toFixed(1)}% in ${then} and ${sr[1].toFixed(1)}% in ${now}.`);
+    $("#housingPoints").innerHTML = H.map((x) => `<li>${x}</li>`).join("") || "<li>No data for this pair of years.</li>";
+    $("#payPoints").innerHTML = P.map((x) => `<li>${x}</li>`).join("") || "<li>No data for this pair of years.</li>";
   }
 
   // ---------- table + sources ----------

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Then vs Now</title>
-<meta name="description" content="Was it really just as hard for our parents? Housing, wages and living costs across generations, using official US data (Census, BLS, Federal Reserve, Freddie Mac).">
+<meta name="description" content="Housing, wages and living costs compared across generations, using official US data (Census, BLS, Federal Reserve, Freddie Mac).">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>">
 <link rel="stylesheet" href="assets/style.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
@@ -14,18 +14,18 @@
 <header class="hero">
   <div class="wrap">
     <p class="eyebrow">United States · official data, 1965 to today</p>
-    <h1>Was it really just as hard?</h1>
-    <p class="lede">Housing, pay and living costs for your parents' generation vs yours, from Census, BLS, the Federal Reserve and Freddie Mac. Set the years, then look at the numbers together.</p>
+    <h1>The cost of getting started, then and now</h1>
+    <p class="lede">Housing, pay and living costs for any two generations, from Census, BLS, the Federal Reserve and Freddie Mac. Pick two birth years to see what each generation faced at the same age.</p>
   </div>
 </header>
 
 <main class="wrap">
   <section class="controls card" aria-label="Choose generations">
     <div class="control-grid">
-      <label>Parents' birth year
+      <label>Earlier birth year
         <input type="number" id="pBirth" min="1930" max="2000" step="1" value="1965">
       </label>
-      <label>Your birth year
+      <label>Later birth year
         <input type="number" id="yBirth" min="1940" max="2010" step="1" value="1996">
       </label>
       <label>Age at first home
@@ -64,7 +64,7 @@
   </section>
 
   <section aria-labelledby="scoreTitle">
-    <h2 id="scoreTitle">The scorecard</h2>
+    <h2 id="scoreTitle">Side by side</h2>
     <p class="muted" id="scoreSub"></p>
     <div class="verdict card" id="verdict"></div>
     <div class="scoregrid" id="scoregrid"></div>
@@ -72,7 +72,7 @@
 
   <section aria-labelledby="housingTitle">
     <h2 id="housingTitle">Housing over time</h2>
-    <p class="muted">Dots mark the two years you chose. Hover or tap a chart to read any year.</p>
+    <p class="muted">Dots mark the two years being compared. Hover or tap a chart to read any year.</p>
     <div class="chartgrid">
       <figure class="card chart-card">
         <figcaption><h3>Home price ÷ yearly income</h3><p>How many years of the median income the median house costs.</p></figcaption>
@@ -91,7 +91,7 @@
         <div class="chart"><canvas id="cRent"></canvas></div>
       </figure>
       <figure class="card chart-card wide">
-        <figcaption><h3>Home prices vs incomes, after inflation</h3><p>Both indexed to 100 in your parents' year. If the lines move apart, houses got more expensive relative to pay.</p></figcaption>
+        <figcaption><h3>Home prices vs incomes, after inflation</h3><p>Both indexed to 100 in the earlier year. If the lines move apart, houses got more expensive relative to pay.</p></figcaption>
         <div class="chart"><canvas id="cReal"></canvas></div>
       </figure>
       <figure class="card chart-card">
@@ -99,14 +99,14 @@
         <div class="chart"><canvas id="cOwn"></canvas></div>
       </figure>
       <figure class="card chart-card">
-        <figcaption><h3>30-year mortgage rate</h3><p>Your parents' strongest argument: rates in the early 1980s were far higher.</p></figcaption>
+        <figcaption><h3>30-year mortgage rate</h3><p>Average rate for each year. Rates peaked in the early 1980s.</p></figcaption>
         <div class="chart"><canvas id="cRate"></canvas></div>
       </figure>
     </div>
   </section>
 
   <section aria-labelledby="costTitle">
-    <h2 id="costTitle">What got more expensive, and what didn't</h2>
+    <h2 id="costTitle">How prices and pay grew</h2>
     <p class="muted" id="costSub"></p>
     <figure class="card chart-card wide">
       <div class="chart tall"><canvas id="cGrowth"></canvas></div>
@@ -117,7 +117,7 @@
     <h2 id="payTitle">Pay</h2>
     <div class="chartgrid">
       <figure class="card chart-card">
-        <figcaption><h3>Productivity vs pay</h3><p>Output per hour worked vs real hourly compensation, both indexed to 100 in your parents' year.</p></figcaption>
+        <figcaption><h3>Productivity vs pay</h3><p>Output per hour worked vs real hourly compensation, both indexed to 100 in the earlier year.</p></figcaption>
         <div class="chart"><canvas id="cProd"></canvas></div>
       </figure>
       <figure class="card chart-card">
@@ -140,15 +140,15 @@
   </section>
 
   <section aria-labelledby="fairTitle">
-    <h2 id="fairTitle">Fair points on both sides</h2>
+    <h2 id="fairTitle">What changed</h2>
     <div class="twocol">
       <div class="card side">
-        <h3>Where your parents have a point</h3>
-        <ul id="parentsPoints"></ul>
+        <h3>Housing</h3>
+        <ul id="housingPoints"></ul>
       </div>
       <div class="card side">
-        <h3>Where you have a point</h3>
-        <ul id="kidsPoints"></ul>
+        <h3>Pay and prices</h3>
+        <ul id="payPoints"></ul>
       </div>
     </div>
   </section>

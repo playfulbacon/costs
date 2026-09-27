@@ -1,8 +1,8 @@
 # Then vs Now
 
-An interactive, static website that compares housing, pay and living costs for your parents' generation with yours, using official US data.
+An interactive, static website that compares housing, pay and living costs across generations, using official US data.
 
-Pick two birth years and a home-buying age. The site then shows a scorecard with inflation-adjusted home prices, incomes, price-to-income ratios, mortgage payments, years needed to save a down payment, rent, homeownership and more. Below the scorecard are charts from 1965 to today, a "fair points on both sides" summary and a table of every year. Your settings are saved in the URL, so you can send someone a link to a specific comparison.
+Pick two birth years and a home-buying age. The site then shows a side-by-side comparison with inflation-adjusted home prices, incomes, price-to-income ratios, mortgage payments, years needed to save a down payment, rent, homeownership and more. Below that are charts from 1965 to today, a summary of what changed and a table of every year. Settings are saved in the URL, so a link always opens the same comparison.
 
 ## Deploy on GitHub Pages
 
