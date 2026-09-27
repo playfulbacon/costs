@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Then vs Now</title>
+<meta name="description" content="Was it really just as hard for our parents? Housing, wages and living costs across generations, using official US data (Census, BLS, Federal Reserve, Freddie Mac).">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>">
+<link rel="stylesheet" href="assets/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+<script src="assets/app.js" defer></script>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">United States · official data, 1965 to today</p>
+    <h1>Was it really just as hard?</h1>
+    <p class="lede">Housing, pay and living costs for your parents' generation vs yours, from Census, BLS, the Federal Reserve and Freddie Mac. Set the years, then look at the numbers together.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="controls card" aria-label="Choose generations">
+    <div class="control-grid">
+      <label>Parents' birth year
+        <input type="number" id="pBirth" min="1930" max="2000" step="1" value="1965">
+      </label>
+      <label>Your birth year
+        <input type="number" id="yBirth" min="1940" max="2010" step="1" value="1996">
+      </label>
+      <label>Age at first home
+        <input type="number" id="age" min="20" max="45" step="1" value="30">
+      </label>
+      <label>Income measure
+        <select id="basis">
+          <option value="young">Ages 25–34</option>
+          <option value="all">All ages</option>
+        </select>
+      </label>
+      <label>Down payment
+        <select id="dp">
+          <option value="0.05">5%</option>
+          <option value="0.1">10%</option>
+          <option value="0.2" selected>20%</option>
+        </select>
+      </label>
+      <label>Share of income saved
+        <select id="save">
+          <option value="0.05">5%</option>
+          <option value="0.1" selected>10%</option>
+          <option value="0.15">15%</option>
+          <option value="0.2">20%</option>
+        </select>
+      </label>
+    </div>
+    <div class="presets" role="group" aria-label="Presets">
+      <span class="muted">Quick compare:</span>
+      <button data-p="1950" data-y="1985">Boomer vs Millennial</button>
+      <button data-p="1965" data-y="1996">Gen X vs Gen Z/Millennial</button>
+      <button data-p="1955" data-y="2000">Boomer vs Gen Z</button>
+      <button data-p="1975" data-y="1995">Older vs younger Millennial</button>
+    </div>
+    <p class="years-line" id="yearsLine"></p>
+  </section>
+
+  <section aria-labelledby="scoreTitle">
+    <h2 id="scoreTitle">The scorecard</h2>
+    <p class="muted" id="scoreSub"></p>
+    <div class="verdict card" id="verdict"></div>
+    <div class="scoregrid" id="scoregrid"></div>
+  </section>
+
+  <section aria-labelledby="housingTitle">
+    <h2 id="housingTitle">Housing over time</h2>
+    <p class="muted">Dots mark the two years you chose. Hover or tap a chart to read any year.</p>
+    <div class="chartgrid">
+      <figure class="card chart-card">
+        <figcaption><h3>Home price ÷ yearly income</h3><p>How many years of the median income the median house costs.</p></figcaption>
+        <div class="chart"><canvas id="cPti"></canvas></div>
+      </figure>
+      <figure class="card chart-card">
+        <figcaption><h3>Mortgage payment as % of income</h3><p>Monthly principal and interest on a 30-year fixed loan at that year's rate. Taxes and insurance are left out.</p></figcaption>
+        <div class="chart"><canvas id="cPay"></canvas></div>
+      </figure>
+      <figure class="card chart-card">
+        <figcaption><h3>Years to save the down payment</h3><p>Saving the chosen share of income each year, with no interest, raises or help from family.</p></figcaption>
+        <div class="chart"><canvas id="cSave"></canvas></div>
+      </figure>
+      <figure class="card chart-card">
+        <figcaption><h3>Rent as % of income</h3><p>Median gross rent (rent plus utilities) × 12 ÷ median income.</p></figcaption>
+        <div class="chart"><canvas id="cRent"></canvas></div>
+      </figure>
+      <figure class="card chart-card wide">
+        <figcaption><h3>Home prices vs incomes, after inflation</h3><p>Both indexed to 100 in your parents' year. If the lines move apart, houses got more expensive relative to pay.</p></figcaption>
+        <div class="chart"><canvas id="cReal"></canvas></div>
+      </figure>
+      <figure class="card chart-card">
+        <figcaption><h3>Homeownership rate</h3><p>Share of households that own their home. Census only started reporting the under-35 rate in 1994.</p></figcaption>
+        <div class="chart"><canvas id="cOwn"></canvas></div>
+      </figure>
+      <figure class="card chart-card">
+        <figcaption><h3>30-year mortgage rate</h3><p>Your parents' strongest argument: rates in the early 1980s were far higher.</p></figcaption>
+        <div class="chart"><canvas id="cRate"></canvas></div>
+      </figure>
+    </div>
+  </section>
+
+  <section aria-labelledby="costTitle">
+    <h2 id="costTitle">What got more expensive, and what didn't</h2>
+    <p class="muted" id="costSub"></p>
+    <figure class="card chart-card wide">
+      <div class="chart tall"><canvas id="cGrowth"></canvas></div>
+    </figure>
+  </section>
+
+  <section aria-labelledby="payTitle">
+    <h2 id="payTitle">Pay</h2>
+    <div class="chartgrid">
+      <figure class="card chart-card">
+        <figcaption><h3>Productivity vs pay</h3><p>Output per hour worked vs real hourly compensation, both indexed to 100 in your parents' year.</p></figcaption>
+        <div class="chart"><canvas id="cProd"></canvas></div>
+      </figure>
+      <figure class="card chart-card">
+        <figcaption><h3>Federal minimum wage, after inflation</h3><p>Shown in <span class="baseYear"></span> dollars. Many states set a higher minimum.</p></figcaption>
+        <div class="chart"><canvas id="cMin"></canvas></div>
+      </figure>
+      <figure class="card chart-card">
+        <figcaption><h3>Hours at minimum wage for one month's rent</h3><p>Median gross rent ÷ federal minimum wage.</p></figcaption>
+        <div class="chart"><canvas id="cMinRent"></canvas></div>
+      </figure>
+      <figure class="card chart-card">
+        <figcaption><h3>Personal saving rate</h3><p>Share of after-tax income Americans saved (all ages).</p></figcaption>
+        <div class="chart"><canvas id="cSaveRate"></canvas></div>
+      </figure>
+      <figure class="card chart-card wide">
+        <figcaption><h3>Student loan debt outstanding</h3><p>Total federal and private student loans, in trillions of <span class="baseYear"></span> dollars. The Fed series starts in 2006.</p></figcaption>
+        <div class="chart"><canvas id="cDebt"></canvas></div>
+      </figure>
+    </div>
+  </section>
+
+  <section aria-labelledby="fairTitle">
+    <h2 id="fairTitle">Fair points on both sides</h2>
+    <div class="twocol">
+      <div class="card side">
+        <h3>Where your parents have a point</h3>
+        <ul id="parentsPoints"></ul>
+      </div>
+      <div class="card side">
+        <h3>Where you have a point</h3>
+        <ul id="kidsPoints"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="tableTitle">
+    <h2 id="tableTitle">All the numbers</h2>
+    <details class="card">
+      <summary>Show the year-by-year table</summary>
+      <div class="table-wrap"><table id="dataTable"></table></div>
+    </details>
+  </section>
+
+  <section aria-labelledby="srcTitle" class="sources">
+    <h2 id="srcTitle">Sources and method</h2>
+    <ul id="sourceList"></ul>
+    <p class="muted small">Annual figures are calendar-year averages of the monthly, weekly or quarterly data. "Today's dollars" means <span class="baseYear"></span> dollars, adjusted with CPI-U. Home prices are the national median for houses sold, so they don't capture differences between cities. Income figures are pre-tax. Mortgage payments are principal and interest only. Rent between census years is an estimate built from the CPI rent index. <span id="genDate"></span></p>
+  </section>
+</main>
+
+<footer class="wrap footer muted small">Build or refresh the data with <code>python3 scripts/build_data.py</code>.</footer>
+</body>
+</html>
